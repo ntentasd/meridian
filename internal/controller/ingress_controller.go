@@ -19,7 +19,9 @@ package controller
 import (
 	"context"
 
+	"github.com/ntentasd/meridian/internal/store"
 	networkingv1 "k8s.io/api/networking/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -30,6 +32,7 @@ import (
 type IngressReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
+	Store  *store.Store
 }
 
 // +kubebuilder:rbac:groups=networking.k8s.io,resources=ingresses,verbs=get;list;watch;create;update;patch;delete
@@ -46,9 +49,22 @@ type IngressReconciler struct {
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.23.3/pkg/reconcile
 func (r *IngressReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	_ = logf.FromContext(ctx)
+	log := logf.FromContext(ctx)
 
-	// TODO(user): your logic here
+	log.V(1).Info("reconciling ingress", "name", req.Name, "namespace", req.Namespace)
+
+	var ing networkingv1.Ingress
+	if err := r.Get(ctx, req.NamespacedName, &ing); err != nil {
+		if apierrors.IsNotFound(err) {
+			r.Store.Delete(store.GetKey("Ingress", req.Namespace, req.Name))
+			log.V(1).
+				Info("deleted ingress from store", "name", req.Name, "namespace", req.Namespace)
+			return ctrl.Result{}, nil
+		}
+		return ctrl.Result{}, err
+	}
+	log.V(1).Info("upserted ingress to store", "name", req.Name, "namespace", req.Namespace)
+	r.Store.Upsert(ingressToEntry(&ing))
 
 	return ctrl.Result{}, nil
 }
@@ -60,4 +76,20 @@ func (r *IngressReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		For(&networkingv1.Ingress{}).
 		Named("ingress").
 		Complete(r)
+}
+
+// TODO: add enricher
+func ingressToEntry(ing *networkingv1.Ingress) store.RouteEntry {
+	hostnames := make([]string, 0, len(ing.Spec.Rules))
+	for _, rule := range ing.Spec.Rules {
+		hostnames = append(hostnames, rule.Host)
+	}
+
+	return store.RouteEntry{
+		UID:       ing.UID,
+		Name:      ing.Name,
+		Namespace: ing.Namespace,
+		Kind:      "Ingress",
+		Hostnames: hostnames,
+	}
 }

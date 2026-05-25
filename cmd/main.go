@@ -39,6 +39,8 @@ import (
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
 
 	"github.com/ntentasd/meridian/internal/controller"
+	"github.com/ntentasd/meridian/internal/server"
+	"github.com/ntentasd/meridian/internal/store"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -247,9 +249,12 @@ func main() {
 		os.Exit(1)
 	}
 
+	s := store.New()
+
 	if err := (&controller.IngressReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
+		Store:  s,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "Failed to create controller", "controller", "Ingress")
 		os.Exit(1)
@@ -269,6 +274,12 @@ func main() {
 	}
 	if err := mgr.AddReadyzCheck("readyz", healthz.Ping); err != nil {
 		setupLog.Error(err, "Failed to set up ready check")
+		os.Exit(1)
+	}
+
+	srv := server.New(s, ":8080")
+	if err := mgr.Add(srv); err != nil {
+		setupLog.Error(err, "unable to add server to manager")
 		os.Exit(1)
 	}
 
