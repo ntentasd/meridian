@@ -262,6 +262,7 @@ func main() {
 	if err := (&controller.HTTPRouteReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
+		Store:  s,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "Failed to create controller", "controller", "HTTPRoute")
 		os.Exit(1)

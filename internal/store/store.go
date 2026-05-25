@@ -3,56 +3,78 @@ package store
 import "sync"
 
 type Store struct {
-	mu      sync.RWMutex
-	entries map[string]RouteEntry // key: "<kind>/<namespace>/<name>"
-	subs    map[chan Event]struct{}
+	mu            sync.RWMutex
+	entries       map[string]RouteEntry // key: Hostname
+	resourceHosts map[string][]string   // key: "<kind>/<namespace>/<name>" -> []Hostname
+	subs          map[chan Event]struct{}
 }
 
 // New returns an initialized Store ready for concurrent use.
 func New() *Store {
 	return &Store{
-		entries: make(map[string]RouteEntry),
-		subs:    make(map[chan Event]struct{}),
+		entries:       make(map[string]RouteEntry),
+		resourceHosts: make(map[string][]string),
+		subs:          make(map[chan Event]struct{}),
 	}
 }
 
-// Upsert writes or overwrites a RouteEntry and broadcasts an upsert event to all subscribers.
-func (s *Store) Upsert(e RouteEntry) {
+// Sync updates the store with the latest entries for a given resource.
+func (s *Store) Sync(resourceKey string, entries []RouteEntry) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	s.entries[GetKey(e.Kind, e.Namespace, e.Name)] = e
+	oldHosts := s.resourceHosts[resourceKey]
+	newHosts := make(map[string]bool)
+
+	for _, e := range entries {
+		newHosts[e.Hostname] = true
+		s.entries[e.Hostname] = e
+	}
+
+	for _, h := range oldHosts {
+		if !newHosts[h] {
+			delete(s.entries, h)
+		}
+	}
+
+	var hosts []string
+	for h := range newHosts {
+		hosts = append(hosts, h)
+	}
+	s.resourceHosts[resourceKey] = hosts
 
 	for ch := range s.subs {
 		select {
-		case ch <- Event{Kind: EventUpsert, Entry: e}:
+		case ch <- Event{Kind: EventUpsert}:
 		default:
 		}
 	}
 }
 
-// Delete removes the entry identified by key and broadcasts a delete event to all subscribers.
-// It is a no-op if the key does not exist.
-func (s *Store) Delete(key string) {
+// Delete removes all entries associated with the given resource key.
+func (s *Store) Delete(resourceKey string) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	e, ok := s.entries[key]
+	hosts, ok := s.resourceHosts[resourceKey]
 	if !ok {
 		return
 	}
 
-	delete(s.entries, key)
+	for _, h := range hosts {
+		delete(s.entries, h)
+	}
+	delete(s.resourceHosts, resourceKey)
 
 	for ch := range s.subs {
 		select {
-		case ch <- Event{Kind: EventDelete, Entry: e}:
+		case ch <- Event{Kind: EventDelete}:
 		default:
 		}
 	}
 }
 
-// List returns a consistent snapshot of all current entries, safe for use as an SSE initial push.
+// List returns a consistent snapshot of all current entries.
 func (s *Store) List() []RouteEntry {
 	s.mu.RLock()
 	defer s.mu.RUnlock()

@@ -50,7 +50,7 @@ func (s *Server) handleUIEvents(w http.ResponseWriter, r *http.Request) {
 
 func sendRowsEvent(ctx context.Context, w http.ResponseWriter, entries []store.RouteEntry) error {
 	var buf bytes.Buffer
-	if err := templates.Rows(entries).Render(ctx, &buf); err != nil {
+	if err := templates.Cards(entries).Render(ctx, &buf); err != nil {
 		return err
 	}
 	html := strings.ReplaceAll(buf.String(), "\n", "")

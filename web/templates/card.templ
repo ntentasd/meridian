@@ -1,0 +1,39 @@
+package templates
+
+import "github.com/ntentasd/meridian/internal/store"
+
+templ Card(e store.RouteEntry) {
+	<a href={ templ.SafeURL("https://" + e.Hostname) } target="_blank" rel="noopener noreferrer" class="card">
+		if e.LogoURL != "" {
+			<img src={ e.LogoURL } alt={ e.Name + " logo" } class="card-logo"/>
+		} else {
+			<div class="card-logo-placeholder">{ string(e.Name[0]) }</div>
+		}
+		<div class="card-content">
+			<div class="card-title">{ e.Hostname }</div>
+			<div class="card-subtitle">{ e.Namespace } / { e.Name }</div>
+			<div class={ "card-kind " + kindClass(e.Kind) }>{ e.Kind }</div>
+		</div>
+	</a>
+}
+
+templ Cards(entries []store.RouteEntry) {
+	if len(entries) == 0 {
+		<div class="empty">No routes discovered yet.</div>
+	} else {
+		for _, e := range entries {
+			@Card(e)
+		}
+	}
+}
+
+func kindClass(kind string) string {
+	switch kind {
+	case "Ingress":
+		return "kind-ingress"
+	case "HTTPRoute":
+		return "kind-httproute"
+	default:
+		return ""
+	}
+}

@@ -19,39 +19,48 @@ package controller
 import (
 	"context"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
+
+	"github.com/ntentasd/meridian/internal/store"
 )
 
 // HTTPRouteReconciler reconciles a HTTPRoute object
 type HTTPRouteReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
+	Store  *store.Store
 }
 
 // +kubebuilder:rbac:groups=gateway.networking.k8s.io,resources=httproutes,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=gateway.networking.k8s.io,resources=httproutes/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=gateway.networking.k8s.io,resources=httproutes/finalizers,verbs=update
 
-// Reconcile is part of the main kubernetes reconciliation loop which aims to
-// move the current state of the cluster closer to the desired state.
-// TODO(user): Modify the Reconcile function to compare the state specified by
-// the HTTPRoute object against the actual cluster state, and then
-// perform operations to make the cluster state reflect the state specified by
-// the user.
-//
-// For more details, check Reconcile and its Result here:
-// - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.23.3/pkg/reconcile
 func (r *HTTPRouteReconciler) Reconcile(
 	ctx context.Context,
 	req ctrl.Request,
 ) (ctrl.Result, error) {
-	_ = logf.FromContext(ctx)
+	log := logf.FromContext(ctx)
 
-	// TODO(user): your logic here
+	log.V(1).Info("reconciling httproute", "name", req.Name, "namespace", req.Namespace)
+
+	var route gatewayv1.HTTPRoute
+	if err := r.Get(ctx, req.NamespacedName, &route); err != nil {
+		if apierrors.IsNotFound(err) {
+			r.Store.Delete(store.GetKey("HTTPRoute", req.Namespace, req.Name))
+			log.V(1).
+				Info("deleted httproute from store", "name", req.Name, "namespace", req.Namespace)
+			return ctrl.Result{}, nil
+		}
+		return ctrl.Result{}, err
+	}
+
+	log.V(1).Info("upserted httproute to store", "name", req.Name, "namespace", req.Namespace)
+	r.Store.Sync(store.GetKey("HTTPRoute", req.Namespace, req.Name), httprouteToEntries(&route))
 
 	return ctrl.Result{}, nil
 }
@@ -59,8 +68,25 @@ func (r *HTTPRouteReconciler) Reconcile(
 // SetupWithManager sets up the controller with the Manager.
 func (r *HTTPRouteReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		// Uncomment the following line adding a pointer to an instance of the controlled resource as an argument
 		For(&gatewayv1.HTTPRoute{}).
 		Named("httproute").
 		Complete(r)
+}
+
+func httprouteToEntries(route *gatewayv1.HTTPRoute) []store.RouteEntry {
+	var entries []store.RouteEntry
+	logoURL := route.Annotations["meridian.ntentas.com/logo-url"]
+
+	for _, host := range route.Spec.Hostnames {
+		entries = append(entries, store.RouteEntry{
+			UID:       route.UID,
+			Name:      route.Name,
+			Namespace: route.Namespace,
+			Kind:      "HTTPRoute",
+			Hostname:  string(host),
+			LogoURL:   logoURL,
+		})
+	}
+
+	return entries
 }

@@ -64,7 +64,7 @@ func (r *IngressReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		return ctrl.Result{}, err
 	}
 	log.V(1).Info("upserted ingress to store", "name", req.Name, "namespace", req.Namespace)
-	r.Store.Upsert(ingressToEntry(&ing))
+	r.Store.Sync(store.GetKey("Ingress", req.Namespace, req.Name), ingressToEntries(&ing))
 
 	return ctrl.Result{}, nil
 }
@@ -79,17 +79,24 @@ func (r *IngressReconciler) SetupWithManager(mgr ctrl.Manager) error {
 }
 
 // TODO: add enricher
-func ingressToEntry(ing *networkingv1.Ingress) store.RouteEntry {
-	hostnames := make([]string, 0, len(ing.Spec.Rules))
+func ingressToEntries(ing *networkingv1.Ingress) []store.RouteEntry {
+	var entries []store.RouteEntry
+	logoURL := ing.Annotations["meridian.ntentas.com/logo-url"]
+	// Add other annotations as needed (owner, desc, etc.)
+
 	for _, rule := range ing.Spec.Rules {
-		hostnames = append(hostnames, rule.Host)
+		if rule.Host == "" {
+			continue
+		}
+		entries = append(entries, store.RouteEntry{
+			UID:       ing.UID,
+			Name:      ing.Name,
+			Namespace: ing.Namespace,
+			Kind:      "Ingress",
+			Hostname:  rule.Host,
+			LogoURL:   logoURL,
+		})
 	}
 
-	return store.RouteEntry{
-		UID:       ing.UID,
-		Name:      ing.Name,
-		Namespace: ing.Namespace,
-		Kind:      "Ingress",
-		Hostnames: hostnames,
-	}
+	return entries
 }

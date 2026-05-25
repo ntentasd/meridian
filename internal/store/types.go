@@ -11,10 +11,11 @@ type RouteEntry struct {
 	Name      string
 	Namespace string
 	Kind      string
-	Hostnames []string
+	Hostname  string
 	Rules     []RouteRule
 
 	// annotation-enriched
+	LogoURL     string
 	Owner       string
 	Description string
 	DocsURL     string
