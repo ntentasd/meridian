@@ -1,8 +1,6 @@
 package templates
 
 import (
-	"strings"
-
 	"github.com/ntentasd/meridian/internal/store"
 )
 
@@ -11,7 +9,14 @@ templ Row(e store.RouteEntry) {
 		<td>{ e.Name }</td>
 		<td>{ e.Namespace }</td>
 		<td class={ kindClass(e.Kind) }>{ e.Kind }</td>
-		<td>{ strings.Join(e.Hostnames, ", ") }</td>
+		<td>
+			for i, h := range e.Hostnames {
+				<a href={ templ.SafeURL("https://" + h) } target="_blank" rel="noopener noreferrer">{ h }</a>
+				if i < len(e.Hostnames)-1 {
+					<span>, </span>
+				}
+			}
+		</td>
 		<td>{ e.Owner }</td>
 	</tr>
 }
