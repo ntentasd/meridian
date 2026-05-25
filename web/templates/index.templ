@@ -1,0 +1,57 @@
+package templates
+
+import "github.com/ntentasd/meridian/internal/store"
+
+templ Index(entries []store.RouteEntry) {
+	<!DOCTYPE html>
+	<html lang="en">
+		<head>
+			<meta charset="UTF-8"/>
+			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+			<title>Meridian</title>
+			<script src="https://unpkg.com/htmx.org@2.0.4/dist/htmx.min.js"></script>
+			<script src="https://unpkg.com/htmx-ext-sse@2.2.2/sse.js"></script>
+			<style>
+				*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+				body { font-family: ui-monospace, monospace; background: #0d1117; color: #e6edf3; padding: 2rem; }
+				h1 { font-size: 1.25rem; font-weight: 600; margin-bottom: 1.5rem; color: #58a6ff; }
+				table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+				thead th { padding: 0.5rem 1rem; text-align: left; color: #8b949e; border-bottom: 1px solid #21262d; font-weight: 500; }
+				tbody tr { border-bottom: 1px solid #161b22; transition: background 0.1s; }
+				tbody tr:hover { background: #161b22; }
+				td { padding: 0.6rem 1rem; }
+				.kind-ingress { color: #79c0ff; }
+				.kind-httproute { color: #7ee787; }
+				.empty { padding: 2rem 1rem; color: #8b949e; text-align: center; }
+			</style>
+		</head>
+		<body>
+			<h1>Meridian</h1>
+			<table>
+				<thead>
+					<tr>
+						<th>Name</th>
+						<th>Namespace</th>
+						<th>Kind</th>
+						<th>Hostnames</th>
+						<th>Owner</th>
+					</tr>
+				</thead>
+				<tbody
+					id="routes"
+					hx-ext="sse"
+					sse-connect="/ui/events"
+					sse-swap="update"
+				>
+					if len(entries) == 0 {
+						<tr><td colspan="5" class="empty">No routes discovered yet.</td></tr>
+					} else {
+						for _, e := range entries {
+							@Row(e)
+						}
+					}
+				</tbody>
+			</table>
+		</body>
+	</html>
+}

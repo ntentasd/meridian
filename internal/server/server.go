@@ -25,6 +25,8 @@ func (s *Server) Start(ctx context.Context) error {
 
 	mux := http.NewServeMux()
 
+	mux.HandleFunc("/", s.handleIndex)
+	mux.HandleFunc("/ui/events", s.handleUIEvents)
 	mux.HandleFunc("/api/routes", s.handleRoutes)
 	mux.HandleFunc("/api/events", s.handleEvents)
 
