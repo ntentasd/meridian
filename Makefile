@@ -14,6 +14,8 @@ endif
 # tools. (i.e. podman)
 CONTAINER_TOOL ?= docker
 
+CHART_DIR := helm/meridian
+
 # Setting SHELL to bash allows bash commands to be executed by recipes.
 # Options are set to exit when a recipe line exits non-zero or a piped command fails.
 SHELL = /usr/bin/env bash -o pipefail
@@ -112,6 +114,10 @@ build: manifests generate fmt vet ## Build manager binary.
 run: manifests generate fmt vet ## Run a controller from your host.
 	go run ./cmd/main.go
 
+.PHONY: dev
+dev: manifests generate fmt vet air ## Run controller with hot-reload (air + templ watch).
+	$(AIR)
+
 # If you wish to build the manager image targeting other platforms you can use the --platform flag.
 # (i.e. docker build --platform linux/arm64). However, you must enable docker buildKit for it.
 # More info: https://docs.docker.com/develop/develop-images/build_enhancements/
@@ -145,6 +151,12 @@ build-installer: manifests generate kustomize ## Generate a consolidated YAML wi
 	mkdir -p dist
 	cd config/manager && "$(KUSTOMIZE)" edit set image controller=${IMG}
 	"$(KUSTOMIZE)" build config/default > dist/install.yaml
+
+.PHONY: helm-generate
+helm-generate: manifests
+	cp config/rbac/role.yaml $(CHART_DIR)/templates/clusterrole.yaml
+	cp config/rbac/role_binding.yaml $(CHART_DIR)/templates/clusterrolebinding.yaml
+	cp config/rbac/service_account.yaml $(CHART_DIR)/templates/serviceaccount.yaml
 
 ##@ Deployment
 
@@ -185,10 +197,12 @@ KUSTOMIZE ?= $(LOCALBIN)/kustomize
 CONTROLLER_GEN ?= $(LOCALBIN)/controller-gen
 ENVTEST ?= $(LOCALBIN)/setup-envtest
 GOLANGCI_LINT = $(LOCALBIN)/golangci-lint
+AIR ?= $(LOCALBIN)/air
 
 ## Tool Versions
 KUSTOMIZE_VERSION ?= v5.8.1
 CONTROLLER_TOOLS_VERSION ?= v0.20.1
+AIR_VERSION ?= v1.61.7
 
 #ENVTEST_VERSION is the version of controller-runtime release branch to fetch the envtest setup script (i.e. release-0.20)
 ENVTEST_VERSION ?= $(shell v='$(call gomodver,sigs.k8s.io/controller-runtime)'; \
@@ -223,6 +237,11 @@ setup-envtest: envtest ## Download the binaries required for ENVTEST in the loca
 envtest: $(ENVTEST) ## Download setup-envtest locally if necessary.
 $(ENVTEST): $(LOCALBIN)
 	$(call go-install-tool,$(ENVTEST),sigs.k8s.io/controller-runtime/tools/setup-envtest,$(ENVTEST_VERSION))
+
+.PHONY: air
+air: $(AIR) ## Download air locally if necessary.
+$(AIR): $(LOCALBIN)
+	$(call go-install-tool,$(AIR),github.com/air-verse/air,$(AIR_VERSION))
 
 .PHONY: golangci-lint
 golangci-lint: $(GOLANGCI_LINT) ## Download golangci-lint locally if necessary.

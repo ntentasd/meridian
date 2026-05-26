@@ -15,13 +15,39 @@ templ Index(entries []store.RouteEntry) {
 			<style>
 				*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 				body { font-family: ui-monospace, monospace; background: #0d1117; color: #e6edf3; padding: 2rem; }
-				header { display: flex; align-items: center; justify-content: center; gap: 0.75rem; margin-bottom: 2rem; }
-				header img { width: 128px; height: 128px; object-fit: contain; }
+
+				header {
+					display: flex;
+					align-items: center;
+					justify-content: space-between;
+					margin-bottom: 2rem;
+					max-width: 1200px;
+					margin-left: auto;
+					margin-right: auto;
+				}
 				h1 { font-size: 1.5rem; font-weight: 600; color: #58a6ff; }
+
+				.toggle-btn {
+					background: #161b22;
+					border: 1px solid #30363d;
+					color: #8b949e;
+					padding: 0.4rem 0.9rem;
+					border-radius: 6px;
+					font-family: inherit;
+					font-size: 0.8rem;
+					cursor: pointer;
+					transition: border-color 0.15s, color 0.15s;
+				}
+				.toggle-btn:hover, .toggle-btn.active {
+					border-color: #58a6ff;
+					color: #58a6ff;
+				}
+
+				/* ── card grid ── */
 				.card-grid {
 					display: grid;
-					grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-					gap: 1.5rem;
+					grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+					gap: 1.25rem;
 					max-width: 1200px;
 					margin: 0 auto;
 				}
@@ -31,66 +57,180 @@ templ Index(entries []store.RouteEntry) {
 					background: #161b22;
 					border: 1px solid #30363d;
 					border-radius: 12px;
-					padding: 1rem;
+					padding: 1.1rem 1.25rem;
 					text-decoration: none;
 					color: inherit;
 					transition: transform 0.15s, border-color 0.15s;
+					min-width: 0;
+					gap: 0.9rem;
 				}
-				.card:hover {
-					transform: translateY(-2px);
-					border-color: #58a6ff;
-				}
+				.card:hover { transform: translateY(-2px); border-color: #58a6ff; }
+
 				.card-logo {
-					width: 48px;
-					height: 48px;
+					width: 44px;
+					height: 44px;
 					border-radius: 8px;
 					object-fit: contain;
-					padding: 1px;
-					margin-right: 1rem;
-					background: #ffffff;
+					padding: 2px;
+					background: #fff;
+					flex-shrink: 0;
 				}
 				.card-logo-placeholder {
-					width: 48px;
-					height: 48px;
+					width: 44px;
+					height: 44px;
 					border-radius: 8px;
 					background: #21262d;
 					color: #8b949e;
 					display: flex;
 					align-items: center;
 					justify-content: center;
-					font-size: 1.5rem;
-					font-weight: 600;
-					margin-right: 1rem;
+					font-size: 1.25rem;
+					font-weight: 700;
 					text-transform: uppercase;
+					flex-shrink: 0;
 				}
 				.card-content {
 					display: flex;
 					flex-direction: column;
 					overflow: hidden;
+					min-width: 0;
+					flex: 1;
 				}
-				.card-title {
-					font-weight: 600;
+				.card-name {
+					font-weight: 700;
 					font-size: 1rem;
 					color: #e6edf3;
 					white-space: nowrap;
 					overflow: hidden;
 					text-overflow: ellipsis;
-					margin-bottom: 0.25rem;
 				}
-				.card-subtitle {
-					font-size: 0.75rem;
-					color: #8b949e;
-					white-space: nowrap;
+				.card-detail-wrapper {
+					display: grid;
+					grid-template-rows: 0fr;
+					margin-top: 0;
+					transition:
+						grid-template-rows 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+						margin-top 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+				}
+				.detailed .card-detail-wrapper {
+					grid-template-rows: 1fr;
+					margin-top: 0.35rem;
+				}
+				.card-detail {
 					overflow: hidden;
-					text-overflow: ellipsis;
+					display: flex;
+					align-items: center;
+					gap: 0.4rem;
+					font-size: 0.72rem;
+					min-width: 0;
+					opacity: 0;
+					transform: translateY(-3px);
+					transition:
+						opacity 0.2s ease 0.05s,
+						transform 0.2s ease 0.05s;
 				}
-				.card-kind {
-					font-size: 0.7rem;
-					margin-top: 0.4rem;
-					font-weight: 600;
+				.detailed .card-detail {
+					opacity: 1;
+					transform: translateY(0);
 				}
+				.card-kind { font-weight: 600; flex-shrink: 0; }
 				.kind-ingress { color: #79c0ff; }
 				.kind-httproute { color: #7ee787; }
+				.card-sep { color: #30363d; flex-shrink: 0; }
+				.card-namespace {
+					color: #8b949e;
+					overflow: hidden;
+					text-overflow: ellipsis;
+					min-width: 0;
+					flex: 1;
+				}
+
+				.card-info-btn {
+					flex-shrink: 0;
+					background: none;
+					border: 1px solid transparent;
+					color: #30363d;
+					cursor: pointer;
+					font-size: 1.1rem;
+					line-height: 1;
+					padding: 0.3rem 0.45rem;
+					border-radius: 6px;
+					transition: color 0.15s, border-color 0.15s;
+					font-family: inherit;
+				}
+				.card:hover .card-info-btn { color: #8b949e; }
+				.card-info-btn:hover { color: #e6edf3 !important; border-color: #30363d; }
+
+				/* ── detail panel ── */
+				.detail-overlay {
+					display: none;
+					position: fixed;
+					inset: 0;
+					background: rgba(1, 4, 9, 0.65);
+					z-index: 99;
+				}
+				.detail-overlay.open { display: block; }
+
+				.detail-panel {
+					position: fixed;
+					top: 0;
+					right: -440px;
+					width: 400px;
+					height: 100vh;
+					background: #0d1117;
+					border-left: 1px solid #30363d;
+					z-index: 100;
+					transition: right 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+					overflow-y: auto;
+					padding: 1.75rem 1.5rem;
+				}
+				.detail-panel.open { right: 0; }
+
+				.dp-header {
+					display: flex;
+					align-items: center;
+					justify-content: space-between;
+					margin-bottom: 1.5rem;
+					padding-bottom: 1rem;
+					border-bottom: 1px solid #21262d;
+				}
+				.dp-title { font-size: 1.05rem; font-weight: 700; color: #e6edf3; }
+				.dp-close {
+					background: none;
+					border: none;
+					color: #8b949e;
+					cursor: pointer;
+					font-size: 1rem;
+					padding: 0.2rem 0.4rem;
+					border-radius: 4px;
+					font-family: inherit;
+				}
+				.dp-close:hover { color: #e6edf3; background: #161b22; }
+
+				.dp-row {
+					display: flex;
+					justify-content: space-between;
+					align-items: baseline;
+					padding: 0.55rem 0;
+					border-bottom: 1px solid #161b22;
+					gap: 1rem;
+				}
+				.dp-label { font-size: 0.72rem; color: #8b949e; flex-shrink: 0; }
+				.dp-value { font-size: 0.82rem; color: #e6edf3; text-align: right; word-break: break-all; }
+				a.dp-value { color: #58a6ff; text-decoration: none; }
+				a.dp-value:hover { text-decoration: underline; }
+				.dp-row-labels { align-items: flex-start; }
+				.dp-labels { display: flex; flex-wrap: wrap; gap: 0.35rem; justify-content: flex-end; }
+				.dp-tag {
+					background: #161b22;
+					border: 1px solid #30363d;
+					border-radius: 4px;
+					padding: 0.15rem 0.45rem;
+					font-size: 0.68rem;
+					color: #8b949e;
+				}
+
+				/* ── empty state ── */
 				.empty {
 					grid-column: 1 / -1;
 					padding: 3rem;
@@ -104,8 +244,8 @@ templ Index(entries []store.RouteEntry) {
 		</head>
 		<body>
 			<header>
-				<img src="/static/logo.png" alt="Meridian logo"/>
 				<h1>Meridian</h1>
+				<button id="view-toggle" class="toggle-btn" onclick="toggleView()">Detailed view</button>
 			</header>
 			<div
 				id="routes"
@@ -122,6 +262,96 @@ templ Index(entries []store.RouteEntry) {
 					}
 				}
 			</div>
+
+			<div id="detail-overlay" class="detail-overlay" onclick="closeDetail()"></div>
+			<div id="detail-panel" class="detail-panel">
+				<div class="dp-header">
+					<span id="dp-name" class="dp-title"></span>
+					<button class="dp-close" onclick="closeDetail()">✕</button>
+				</div>
+				<div id="dp-body" class="dp-body"></div>
+			</div>
+
+			<script>
+				function toggleView() {
+					const routes = document.getElementById('routes');
+					const btn = document.getElementById('view-toggle');
+					const on = routes.classList.toggle('detailed');
+					btn.textContent = on ? 'Simple view' : 'Detailed view';
+					btn.classList.toggle('active', on);
+				}
+
+				function kindCls(kind) {
+					if (kind === 'Ingress') return 'kind-ingress';
+					if (kind === 'HTTPRoute') return 'kind-httproute';
+					return '';
+				}
+
+				function row(label, value, href) {
+					if (!value) return null;
+					const r = document.createElement('div');
+					r.className = 'dp-row';
+					const l = document.createElement('span');
+					l.className = 'dp-label';
+					l.textContent = label;
+					const v = document.createElement(href ? 'a' : 'span');
+					v.className = 'dp-value' + (label === 'Kind' ? ' ' + kindCls(value) : '');
+					v.textContent = value;
+					if (href) { v.href = href; v.target = '_blank'; v.rel = 'noopener noreferrer'; }
+					r.append(l, v);
+					return r;
+				}
+
+				function openDetail(btn) {
+					const e = JSON.parse(btn.dataset.entry);
+					document.getElementById('dp-name').textContent = e.Name;
+					const body = document.getElementById('dp-body');
+					body.innerHTML = '';
+
+					const fields = [
+						row('Kind',        e.Kind),
+						row('Namespace',   e.Namespace),
+						row('Hostname',    e.Hostname,  'https://' + e.Hostname),
+						row('Owner',       e.Owner),
+						row('Description', e.Description),
+						row('Docs',        e.DocsURL, e.DocsURL),
+						row('Tags',        e.Tags && e.Tags.length ? e.Tags.join(', ') : ''),
+						row('UID',         e.UID),
+						row('Updated',     e.UpdatedAt && new Date(e.UpdatedAt).getFullYear() > 1 ? new Date(e.UpdatedAt).toLocaleString() : ''),
+					];
+					fields.forEach(r => r && body.appendChild(r));
+
+					if (e.Labels && Object.keys(e.Labels).length) {
+						const r = document.createElement('div');
+						r.className = 'dp-row dp-row-labels';
+						const l = document.createElement('span');
+						l.className = 'dp-label';
+						l.textContent = 'Labels';
+						const wrap = document.createElement('div');
+						wrap.className = 'dp-labels';
+						Object.entries(e.Labels).forEach(([k, v]) => {
+							const t = document.createElement('span');
+							t.className = 'dp-tag';
+							t.textContent = k + '=' + v;
+							wrap.appendChild(t);
+						});
+						r.append(l, wrap);
+						body.appendChild(r);
+					}
+
+					document.getElementById('detail-panel').classList.add('open');
+					document.getElementById('detail-overlay').classList.add('open');
+				}
+
+				function closeDetail() {
+					document.getElementById('detail-panel').classList.remove('open');
+					document.getElementById('detail-overlay').classList.remove('open');
+				}
+
+				document.addEventListener('keydown', e => {
+					if (e.key === 'Escape') closeDetail();
+				});
+			</script>
 		</body>
 	</html>
 }

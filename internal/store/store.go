@@ -1,6 +1,9 @@
 package store
 
-import "sync"
+import (
+	"sort"
+	"sync"
+)
 
 type Store struct {
 	mu            sync.RWMutex
@@ -83,6 +86,12 @@ func (s *Store) List() []RouteEntry {
 	for _, e := range s.entries {
 		entries = append(entries, e)
 	}
+	sort.Slice(entries, func(i, j int) bool {
+		if entries[i].Name != entries[j].Name {
+			return entries[i].Name < entries[j].Name
+		}
+		return entries[i].Hostname < entries[j].Hostname
+	})
 
 	return entries
 }

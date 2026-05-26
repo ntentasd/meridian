@@ -1,19 +1,34 @@
 package templates
 
-import "github.com/ntentasd/meridian/internal/store"
+import (
+	"encoding/json"
+
+	"github.com/ntentasd/meridian/internal/store"
+)
 
 templ Card(e store.RouteEntry) {
-	<a href={ templ.SafeURL("https://" + e.Hostname) } target="_blank" rel="noopener noreferrer" class="card">
+	<a href={ templ.SafeURL("https://" + e.Hostname) } title={ e.Hostname } target="_blank" rel="noopener noreferrer" class="card">
 		if e.LogoURL != "" {
 			<img src={ e.LogoURL } alt={ e.Name + " logo" } class="card-logo"/>
 		} else {
-			<div class="card-logo-placeholder">{ string(e.Name[0]) }</div>
+			<div class="card-logo-placeholder">{ string([]rune(e.Name)[0]) }</div>
 		}
 		<div class="card-content">
-			<div class="card-title">{ e.Hostname }</div>
-			<div class="card-subtitle">{ e.Namespace } / { e.Name }</div>
-			<div class={ "card-kind " + kindClass(e.Kind) }>{ e.Kind }</div>
+			<div class="card-name">{ e.Name }</div>
+			<div class="card-detail-wrapper">
+				<div class="card-detail">
+					<span class={ "card-kind " + kindClass(e.Kind) }>{ e.Kind }</span>
+					<span class="card-sep">·</span>
+					<span class="card-namespace">{ e.Namespace }</span>
+				</div>
+			</div>
 		</div>
+		<button
+			class="card-info-btn"
+			data-entry={ entryJSON(e) }
+			onclick="event.preventDefault();event.stopPropagation();openDetail(this)"
+			title="View details"
+		>⋯</button>
 	</a>
 }
 
@@ -36,4 +51,9 @@ func kindClass(kind string) string {
 	default:
 		return ""
 	}
+}
+
+func entryJSON(e store.RouteEntry) string {
+	b, _ := json.Marshal(e)
+	return string(b)
 }
