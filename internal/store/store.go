@@ -37,7 +37,7 @@ func (s *Store) Sync(resourceKey string, entries []RouteEntry) {
 		}
 	}
 
-	var hosts []string
+	hosts := make([]string, 0, len(newHosts))
 	for h := range newHosts {
 		hosts = append(hosts, h)
 	}

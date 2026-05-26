@@ -9,12 +9,15 @@ templ Index(entries []store.RouteEntry) {
 			<meta charset="UTF-8"/>
 			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 			<title>Meridian</title>
+			<link rel="icon" type="image/png" href="/static/logo.png"/>
 			<script src="https://unpkg.com/htmx.org@2.0.4/dist/htmx.min.js"></script>
 			<script src="https://unpkg.com/htmx-ext-sse@2.2.2/sse.js"></script>
 			<style>
 				*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 				body { font-family: ui-monospace, monospace; background: #0d1117; color: #e6edf3; padding: 2rem; }
-				h1 { font-size: 1.5rem; font-weight: 600; margin-bottom: 2rem; color: #58a6ff; text-align: center; }
+				header { display: flex; align-items: center; justify-content: center; gap: 0.75rem; margin-bottom: 2rem; }
+				header img { width: 128px; height: 128px; object-fit: contain; }
+				h1 { font-size: 1.5rem; font-weight: 600; color: #58a6ff; }
 				.card-grid {
 					display: grid;
 					grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
@@ -100,13 +103,16 @@ templ Index(entries []store.RouteEntry) {
 			</style>
 		</head>
 		<body>
-			<h1>Meridian</h1>
+			<header>
+				<img src="/static/logo.png" alt="Meridian logo"/>
+				<h1>Meridian</h1>
+			</header>
 			<div
 				id="routes"
 				class="card-grid"
 				hx-ext="sse"
 				sse-connect="/ui/events"
-				sse-swap="innerHTML"
+				sse-swap="update"
 			>
 				if len(entries) == 0 {
 					<div class="empty">No routes discovered yet.</div>

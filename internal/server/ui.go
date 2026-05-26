@@ -27,13 +27,13 @@ func (s *Server) handleUIEvents(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	ch := s.store.Subscribe()
+	defer s.store.Unsubscribe(ch)
+
 	if err := sendRowsEvent(r.Context(), w, s.store.List()); err != nil {
 		return
 	}
 	flusher.Flush()
-
-	ch := s.store.Subscribe()
-	defer s.store.Unsubscribe(ch)
 
 	for {
 		select {

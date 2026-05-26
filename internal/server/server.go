@@ -2,12 +2,14 @@ package server
 
 import (
 	"context"
+	"io/fs"
 	"net/http"
 	"time"
 
 	ctrl "sigs.k8s.io/controller-runtime"
 
 	"github.com/ntentasd/meridian/internal/store"
+	"github.com/ntentasd/meridian/web"
 )
 
 type Server struct {
@@ -23,8 +25,11 @@ func (s *Server) Start(ctx context.Context) error {
 	log := ctrl.Log.WithName("meridian-server")
 	log.Info("Starting Meridian API server", "addr", s.addr)
 
+	static, _ := fs.Sub(web.Static, "static")
+
 	mux := http.NewServeMux()
 
+	mux.Handle("/static/", http.StripPrefix("/static/", http.FileServerFS(static)))
 	mux.HandleFunc("/", s.handleIndex)
 	mux.HandleFunc("/ui/events", s.handleUIEvents)
 	mux.HandleFunc("/api/routes", s.handleRoutes)
