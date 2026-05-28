@@ -23,6 +23,10 @@ jobs:
           username: ${{ vars.REGISTRY_USERNAME }}
           password: ${{ secrets.REGISTRY_TOKEN }}
 
+      - name: Extract version
+        id: version
+        run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
       - name: Build and push
         uses: docker/build-push-action@v7
         with:
@@ -30,7 +34,7 @@ jobs:
           platforms: linux/amd64
           push: true
           tags: |
-            ${{ vars.REGISTRY_USERNAME }}/meridian:${{ github.ref_name }}
+            ${{ vars.REGISTRY_USERNAME }}/meridian:${{ steps.version.outputs.version }}
             ${{ vars.REGISTRY_USERNAME }}/meridian:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
