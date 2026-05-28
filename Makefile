@@ -152,12 +152,6 @@ build-installer: manifests generate kustomize ## Generate a consolidated YAML wi
 	cd config/manager && "$(KUSTOMIZE)" edit set image controller=${IMG}
 	"$(KUSTOMIZE)" build config/default > dist/install.yaml
 
-.PHONY: helm-generate
-helm-generate: manifests
-	cp config/rbac/role.yaml $(CHART_DIR)/templates/clusterrole.yaml
-	cp config/rbac/role_binding.yaml $(CHART_DIR)/templates/clusterrolebinding.yaml
-	cp config/rbac/service_account.yaml $(CHART_DIR)/templates/serviceaccount.yaml
-
 ##@ Deployment
 
 ifndef ignore-not-found

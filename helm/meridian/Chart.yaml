@@ -1,0 +1,11 @@
+apiVersion: v2
+name: meridian
+description: A Kubernetes-native developer portal that auto-discovers Ingress and HTTPRoute resources and surfaces them in a live, unified dashboard.
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+keywords:
+  - developer-portal
+  - ingress
+  - gateway-api
+  - observability
