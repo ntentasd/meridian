@@ -19,5 +19,6 @@ jobs:
 
       - name: Check linter configuration
         run: make lint-config
+
       - name: Run linter
         run: make lint
