@@ -74,7 +74,7 @@ func (r *HTTPRouteReconciler) SetupWithManager(mgr ctrl.Manager) error {
 }
 
 func httprouteToEntries(route *gatewayv1.HTTPRoute) []store.RouteEntry {
-	var entries []store.RouteEntry
+	entries := make([]store.RouteEntry, 0, 1)
 	logoURL := route.Annotations["meridian.ntentas.com/logo-url"]
 
 	for _, host := range route.Spec.Hostnames {
