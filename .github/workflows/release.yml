@@ -56,7 +56,7 @@ jobs:
           sed -i "s/^version:.*/version: ${VERSION}/" helm/meridian/Chart.yaml
           sed -i "s/^appVersion:.*/appVersion: \"${VERSION}\"/" helm/meridian/Chart.yaml
           git add helm/meridian/Chart.yaml
-          git commit -m "chore: release ${GITHUB_REF_NAME}"
+          git diff --cached --quiet || git commit -m "chore: release ${GITHUB_REF_NAME}"
           git push origin main
 
       - name: Install Helm
