@@ -13,9 +13,58 @@ templ Index(entries []store.RouteEntry) {
 			<script src="https://unpkg.com/htmx.org@2.0.4/dist/htmx.min.js"></script>
 			<script src="https://unpkg.com/htmx-ext-sse@2.2.2/sse.js"></script>
 			<style>
-				*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-				body { font-family: ui-monospace, monospace; background: #0d1117; color: #e6edf3; padding: 2rem; }
+				/* ── tokens ── */
+				:root {
+					--bg:             #0d1117;
+					--bg-card:        #161b22;
+					--bg-placeholder: #21262d;
+					--bg-input:       #161b22;
+					--border:         #30363d;
+					--border-subtle:  #21262d;
+					--text-primary:   #e6edf3;
+					--text-secondary: #8b949e;
+					--text-sep:       #30363d;
+					--accent:         #58a6ff;
+					--kind-ingress:   #79c0ff;
+					--kind-httproute: #7ee787;
+					--overlay:        rgba(1, 4, 9, 0.65);
+					--shadow:         0 0 0 1px var(--border);
+				}
+				[data-theme="light"] {
+					--bg:             #ffffff;
+					--bg-card:        #f6f8fa;
+					--bg-placeholder: #eaeef2;
+					--bg-input:       #ffffff;
+					--border:         #d0d7de;
+					--border-subtle:  #eaeef2;
+					--text-primary:   #1f2328;
+					--text-secondary: #636c76;
+					--text-sep:       #d0d7de;
+					--accent:         #0969da;
+					--kind-ingress:   #0550ae;
+					--kind-httproute: #1a7f37;
+					--overlay:        rgba(101, 109, 118, 0.35);
+					--shadow:         0 1px 3px rgba(31,35,40,0.12);
+				}
 
+				/* ── theme transition (only during switch) ── */
+				.theme-transitioning,
+				.theme-transitioning * {
+					transition:
+						background-color 0.25s ease,
+						color 0.25s ease,
+						border-color 0.25s ease !important;
+				}
+
+				*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+				body {
+					font-family: ui-monospace, monospace;
+					background: var(--bg);
+					color: var(--text-primary);
+					padding: 2rem;
+				}
+
+				/* ── header ── */
 				header {
 					display: flex;
 					align-items: center;
@@ -25,12 +74,33 @@ templ Index(entries []store.RouteEntry) {
 					margin-left: auto;
 					margin-right: auto;
 				}
-				h1 { font-size: 1.5rem; font-weight: 600; color: #58a6ff; }
+				h1 { font-size: 1.5rem; font-weight: 600; color: var(--accent); }
+				.header-controls { display: flex; align-items: center; gap: 0.75rem; }
 
+				/* ── theme button ── */
+				.theme-btn {
+					background: var(--bg-input);
+					border: 1px solid var(--border);
+					color: var(--text-secondary);
+					width: 34px;
+					height: 34px;
+					padding: 0;
+					border-radius: 6px;
+					font-size: 0.95rem;
+					line-height: 1;
+					cursor: pointer;
+					transition: border-color 0.15s, color 0.15s;
+					display: flex;
+					align-items: center;
+					justify-content: center;
+				}
+				.theme-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+				/* ── view toggle ── */
 				.toggle-btn {
-					background: #161b22;
-					border: 1px solid #30363d;
-					color: #8b949e;
+					background: var(--bg-input);
+					border: 1px solid var(--border);
+					color: var(--text-secondary);
 					padding: 0.4rem 0.9rem;
 					border-radius: 6px;
 					font-family: inherit;
@@ -39,8 +109,8 @@ templ Index(entries []store.RouteEntry) {
 					transition: border-color 0.15s, color 0.15s;
 				}
 				.toggle-btn:hover, .toggle-btn.active {
-					border-color: #58a6ff;
-					color: #58a6ff;
+					border-color: var(--accent);
+					color: var(--accent);
 				}
 
 				/* ── card grid ── */
@@ -54,8 +124,8 @@ templ Index(entries []store.RouteEntry) {
 				.card {
 					display: flex;
 					align-items: center;
-					background: #161b22;
-					border: 1px solid #30363d;
+					background: var(--bg-card);
+					border: 1px solid var(--border);
 					border-radius: 12px;
 					padding: 1.1rem 1.25rem;
 					text-decoration: none;
@@ -64,7 +134,7 @@ templ Index(entries []store.RouteEntry) {
 					min-width: 0;
 					gap: 0.9rem;
 				}
-				.card:hover { transform: translateY(-2px); border-color: #58a6ff; }
+				.card:hover { transform: translateY(-2px); border-color: var(--accent); }
 
 				.card-logo {
 					width: 44px;
@@ -79,8 +149,8 @@ templ Index(entries []store.RouteEntry) {
 					width: 44px;
 					height: 44px;
 					border-radius: 8px;
-					background: #21262d;
-					color: #8b949e;
+					background: var(--bg-placeholder);
+					color: var(--text-secondary);
 					display: flex;
 					align-items: center;
 					justify-content: center;
@@ -99,7 +169,7 @@ templ Index(entries []store.RouteEntry) {
 				.card-name {
 					font-weight: 700;
 					font-size: 1rem;
-					color: #e6edf3;
+					color: var(--text-primary);
 					white-space: nowrap;
 					overflow: hidden;
 					text-overflow: ellipsis;
@@ -125,20 +195,16 @@ templ Index(entries []store.RouteEntry) {
 					min-width: 0;
 					opacity: 0;
 					transform: translateY(-3px);
-					transition:
-						opacity 0.2s ease 0.05s,
-						transform 0.2s ease 0.05s;
+					transition: opacity 0.2s ease 0.05s, transform 0.2s ease 0.05s;
 				}
-				.detailed .card-detail {
-					opacity: 1;
-					transform: translateY(0);
-				}
+				.detailed .card-detail { opacity: 1; transform: translateY(0); }
+
 				.card-kind { font-weight: 600; flex-shrink: 0; }
-				.kind-ingress { color: #79c0ff; }
-				.kind-httproute { color: #7ee787; }
-				.card-sep { color: #30363d; flex-shrink: 0; }
+				.kind-ingress  { color: var(--kind-ingress); }
+				.kind-httproute { color: var(--kind-httproute); }
+				.card-sep { color: var(--text-sep); flex-shrink: 0; }
 				.card-namespace {
-					color: #8b949e;
+					color: var(--text-secondary);
 					overflow: hidden;
 					text-overflow: ellipsis;
 					min-width: 0;
@@ -149,7 +215,7 @@ templ Index(entries []store.RouteEntry) {
 					flex-shrink: 0;
 					background: none;
 					border: 1px solid transparent;
-					color: #30363d;
+					color: var(--border);
 					cursor: pointer;
 					font-size: 1.1rem;
 					line-height: 1;
@@ -158,15 +224,15 @@ templ Index(entries []store.RouteEntry) {
 					transition: color 0.15s, border-color 0.15s;
 					font-family: inherit;
 				}
-				.card:hover .card-info-btn { color: #8b949e; }
-				.card-info-btn:hover { color: #e6edf3 !important; border-color: #30363d; }
+				.card:hover .card-info-btn { color: var(--text-secondary); }
+				.card-info-btn:hover { color: var(--text-primary) !important; border-color: var(--border); }
 
 				/* ── detail panel ── */
 				.detail-overlay {
 					display: none;
 					position: fixed;
 					inset: 0;
-					background: rgba(1, 4, 9, 0.65);
+					background: var(--overlay);
 					z-index: 99;
 				}
 				.detail-overlay.open { display: block; }
@@ -177,8 +243,8 @@ templ Index(entries []store.RouteEntry) {
 					right: -440px;
 					width: 400px;
 					height: 100vh;
-					background: #0d1117;
-					border-left: 1px solid #30363d;
+					background: var(--bg);
+					border-left: 1px solid var(--border);
 					z-index: 100;
 					transition: right 0.28s cubic-bezier(0.4, 0, 0.2, 1);
 					overflow-y: auto;
@@ -192,60 +258,63 @@ templ Index(entries []store.RouteEntry) {
 					justify-content: space-between;
 					margin-bottom: 1.5rem;
 					padding-bottom: 1rem;
-					border-bottom: 1px solid #21262d;
+					border-bottom: 1px solid var(--border-subtle);
 				}
-				.dp-title { font-size: 1.05rem; font-weight: 700; color: #e6edf3; }
+				.dp-title { font-size: 1.05rem; font-weight: 700; color: var(--text-primary); }
 				.dp-close {
 					background: none;
 					border: none;
-					color: #8b949e;
+					color: var(--text-secondary);
 					cursor: pointer;
 					font-size: 1rem;
 					padding: 0.2rem 0.4rem;
 					border-radius: 4px;
 					font-family: inherit;
 				}
-				.dp-close:hover { color: #e6edf3; background: #161b22; }
+				.dp-close:hover { color: var(--text-primary); background: var(--bg-card); }
 
 				.dp-row {
 					display: flex;
 					justify-content: space-between;
 					align-items: baseline;
 					padding: 0.55rem 0;
-					border-bottom: 1px solid #161b22;
+					border-bottom: 1px solid var(--border-subtle);
 					gap: 1rem;
 				}
-				.dp-label { font-size: 0.72rem; color: #8b949e; flex-shrink: 0; }
-				.dp-value { font-size: 0.82rem; color: #e6edf3; text-align: right; word-break: break-all; }
-				a.dp-value { color: #58a6ff; text-decoration: none; }
+				.dp-label { font-size: 0.72rem; color: var(--text-secondary); flex-shrink: 0; }
+				.dp-value { font-size: 0.82rem; color: var(--text-primary); text-align: right; word-break: break-all; }
+				a.dp-value { color: var(--accent); text-decoration: none; }
 				a.dp-value:hover { text-decoration: underline; }
 				.dp-row-labels { align-items: flex-start; }
 				.dp-labels { display: flex; flex-wrap: wrap; gap: 0.35rem; justify-content: flex-end; }
 				.dp-tag {
-					background: #161b22;
-					border: 1px solid #30363d;
+					background: var(--bg-card);
+					border: 1px solid var(--border);
 					border-radius: 4px;
 					padding: 0.15rem 0.45rem;
 					font-size: 0.68rem;
-					color: #8b949e;
+					color: var(--text-secondary);
 				}
 
 				/* ── empty state ── */
 				.empty {
 					grid-column: 1 / -1;
 					padding: 3rem;
-					color: #8b949e;
+					color: var(--text-secondary);
 					text-align: center;
-					background: #161b22;
+					background: var(--bg-card);
 					border-radius: 12px;
-					border: 1px dashed #30363d;
+					border: 1px dashed var(--border);
 				}
 			</style>
 		</head>
 		<body>
 			<header>
 				<h1>Meridian</h1>
-				<button id="view-toggle" class="toggle-btn" onclick="toggleView()">Detailed view</button>
+				<div class="header-controls">
+					<button id="theme-btn" class="theme-btn" onclick="toggleTheme()"></button>
+					<button id="view-toggle" class="toggle-btn" onclick="toggleView()">Detailed view</button>
+				</div>
 			</header>
 			<div
 				id="routes"
@@ -273,6 +342,27 @@ templ Index(entries []store.RouteEntry) {
 			</div>
 
 			<script>
+				function setTheme(theme, animate) {
+					if (animate) {
+						document.documentElement.classList.add('theme-transitioning');
+						setTimeout(() => document.documentElement.classList.remove('theme-transitioning'), 300);
+					}
+					document.documentElement.setAttribute('data-theme', theme);
+					localStorage.setItem('meridian-theme', theme);
+					document.getElementById('theme-btn').textContent = theme === 'dark' ? '☀' : '☽';
+				}
+
+				function toggleTheme() {
+					const current = document.documentElement.getAttribute('data-theme') || 'dark';
+					setTheme(current === 'dark' ? 'light' : 'dark', true);
+				}
+
+				(function () {
+					const saved = localStorage.getItem('meridian-theme');
+					const preferred = saved || (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+					setTheme(preferred, false);
+				})();
+
 				function toggleView() {
 					const routes = document.getElementById('routes');
 					const btn = document.getElementById('view-toggle');
@@ -311,7 +401,7 @@ templ Index(entries []store.RouteEntry) {
 					const fields = [
 						row('Kind',        e.Kind),
 						row('Namespace',   e.Namespace),
-						row('Hostname',    e.Hostname,  'https://' + e.Hostname),
+						row('Hostname',    e.Hostname, 'https://' + e.Hostname),
 						row('Owner',       e.Owner),
 						row('Description', e.Description),
 						row('Docs',        e.DocsURL, e.DocsURL),
