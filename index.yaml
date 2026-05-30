@@ -2,6 +2,22 @@ apiVersion: v1
 entries:
   meridian:
   - apiVersion: v2
+    appVersion: 0.1.1
+    created: "2026-05-30T11:56:41.629658596Z"
+    description: A Kubernetes-native developer portal that auto-discovers Ingress
+      and HTTPRoute resources and surfaces them in a live, unified dashboard.
+    digest: cb8250a1d6ab29f65bc632c8bdb29e106e94b28c1631c63ddb9f35f1c7ccd519
+    keywords:
+    - developer-portal
+    - ingress
+    - gateway-api
+    - observability
+    name: meridian
+    type: application
+    urls:
+    - https://github.com/ntentasd/meridian/releases/download/meridian-0.1.1/meridian-0.1.1.tgz
+    version: 0.1.1
+  - apiVersion: v2
     appVersion: 0.1.0
     created: "2026-05-28T22:47:53.736062087Z"
     description: A Kubernetes-native developer portal that auto-discovers Ingress
@@ -17,4 +33,4 @@ entries:
     urls:
     - https://github.com/ntentasd/meridian/releases/download/meridian-0.1.0/meridian-0.1.0.tgz
     version: 0.1.0
-generated: "2026-05-28T22:47:53.736072512Z"
+generated: "2026-05-30T11:56:41.629665396Z"
