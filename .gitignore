@@ -27,6 +27,9 @@ go.work
 *.swo
 *~
 
+# Air build output
+tmp/
+
 # Kubeconfig might contain secrets
 *.kubeconfig
 
