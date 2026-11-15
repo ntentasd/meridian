@@ -3,445 +3,546 @@ package templates
 import "github.com/ntentasd/meridian/internal/store"
 
 templ Index(entries []store.RouteEntry) {
-	<!DOCTYPE html>
-	<html lang="en">
-		<head>
-			<meta charset="UTF-8"/>
-			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-			<title>Meridian</title>
-			<link rel="icon" type="image/png" href="/static/logo.png"/>
-			<script src="https://unpkg.com/htmx.org@2.0.4/dist/htmx.min.js"></script>
-			<script src="https://unpkg.com/htmx-ext-sse@2.2.2/sse.js"></script>
-			<style>
-				/* ── tokens ── */
-				:root {
-					--bg:             #0d1117;
-					--bg-card:        #161b22;
-					--bg-placeholder: #21262d;
-					--bg-input:       #161b22;
-					--border:         #30363d;
-					--border-subtle:  #21262d;
-					--text-primary:   #e6edf3;
-					--text-secondary: #8b949e;
-					--text-sep:       #30363d;
-					--accent:         #58a6ff;
-					--kind-ingress:   #79c0ff;
-					--kind-httproute: #7ee787;
-					--overlay:        rgba(1, 4, 9, 0.65);
-					--shadow:         0 0 0 1px var(--border);
-				}
-				[data-theme="light"] {
-					--bg:             #ffffff;
-					--bg-card:        #f6f8fa;
-					--bg-placeholder: #eaeef2;
-					--bg-input:       #ffffff;
-					--border:         #d0d7de;
-					--border-subtle:  #eaeef2;
-					--text-primary:   #1f2328;
-					--text-secondary: #636c76;
-					--text-sep:       #d0d7de;
-					--accent:         #0969da;
-					--kind-ingress:   #0550ae;
-					--kind-httproute: #1a7f37;
-					--overlay:        rgba(101, 109, 118, 0.35);
-					--shadow:         0 1px 3px rgba(31,35,40,0.12);
-				}
+<!DOCTYPE html>
+<html lang="en">
 
-				/* ── theme transition (only during switch) ── */
-				.theme-transitioning,
-				.theme-transitioning * {
-					transition:
-						background-color 0.25s ease,
-						color 0.25s ease,
-						border-color 0.25s ease !important;
-				}
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>Meridian</title>
+	<link rel="icon" type="image/png" href="/static/logo.png" />
+	<script src="https://unpkg.com/htmx.org@2.0.4/dist/htmx.min.js"></script>
+	<script src="https://unpkg.com/htmx-ext-sse@2.2.2/sse.js"></script>
+	<style>
+		/* ── tokens ── */
+		:root {
+			--bg: #0d1117;
+			--bg-card: #161b22;
+			--bg-placeholder: #21262d;
+			--bg-input: #161b22;
+			--border: #30363d;
+			--border-subtle: #21262d;
+			--text-primary: #e6edf3;
+			--text-secondary: #8b949e;
+			--text-sep: #30363d;
+			--accent: #58a6ff;
+			--kind-ingress: #79c0ff;
+			--kind-httproute: #7ee787;
+			--overlay: rgba(1, 4, 9, 0.65);
+			--shadow: 0 0 0 1px var(--border);
+		}
 
-				*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-				body {
-					font-family: ui-monospace, monospace;
-					background: var(--bg);
-					color: var(--text-primary);
-					padding: 2rem;
-				}
+		[data-theme="light"] {
+			--bg: #ffffff;
+			--bg-card: #f6f8fa;
+			--bg-placeholder: #eaeef2;
+			--bg-input: #ffffff;
+			--border: #d0d7de;
+			--border-subtle: #eaeef2;
+			--text-primary: #1f2328;
+			--text-secondary: #636c76;
+			--text-sep: #d0d7de;
+			--accent: #0969da;
+			--kind-ingress: #0550ae;
+			--kind-httproute: #1a7f37;
+			--overlay: rgba(101, 109, 118, 0.35);
+			--shadow: 0 1px 3px rgba(31, 35, 40, 0.12);
+		}
 
-				/* ── header ── */
-				header {
-					display: flex;
-					align-items: center;
-					justify-content: space-between;
-					margin-bottom: 2rem;
-					max-width: 1200px;
-					margin-left: auto;
-					margin-right: auto;
-				}
-				h1 { font-size: 1.5rem; font-weight: 600; color: var(--accent); }
-				.header-controls { display: flex; align-items: center; gap: 0.75rem; }
+		/* ── theme transition (only during switch) ── */
+		.theme-transitioning,
+		.theme-transitioning * {
+			transition:
+				background-color 0.25s ease,
+				color 0.25s ease,
+				border-color 0.25s ease !important;
+		}
 
-				/* ── theme button ── */
-				.theme-btn {
-					background: var(--bg-input);
-					border: 1px solid var(--border);
-					color: var(--text-secondary);
-					width: 34px;
-					height: 34px;
-					padding: 0;
-					border-radius: 6px;
-					font-size: 0.95rem;
-					line-height: 1;
-					cursor: pointer;
-					transition: border-color 0.15s, color 0.15s;
-					display: flex;
-					align-items: center;
-					justify-content: center;
-				}
-				.theme-btn:hover { border-color: var(--accent); color: var(--accent); }
+		*,
+		*::before,
+		*::after {
+			box-sizing: border-box;
+			margin: 0;
+			padding: 0;
+		}
 
-				/* ── view toggle ── */
-				.toggle-btn {
-					background: var(--bg-input);
-					border: 1px solid var(--border);
-					color: var(--text-secondary);
-					padding: 0.4rem 0.9rem;
-					border-radius: 6px;
-					font-family: inherit;
-					font-size: 0.8rem;
-					cursor: pointer;
-					transition: border-color 0.15s, color 0.15s;
-				}
-				.toggle-btn:hover, .toggle-btn.active {
-					border-color: var(--accent);
-					color: var(--accent);
-				}
+		body {
+			font-family: ui-monospace, monospace;
+			background: var(--bg);
+			color: var(--text-primary);
+			padding: 2rem;
+		}
 
-				/* ── card grid ── */
-				.card-grid {
-					display: grid;
-					grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-					gap: 1.25rem;
-					max-width: 1200px;
-					margin: 0 auto;
-				}
-				.card {
-					display: flex;
-					align-items: center;
-					background: var(--bg-card);
-					border: 1px solid var(--border);
-					border-radius: 12px;
-					padding: 1.1rem 1.25rem;
-					text-decoration: none;
-					color: inherit;
-					transition: transform 0.15s, border-color 0.15s;
-					min-width: 0;
-					gap: 0.9rem;
-				}
-				.card:hover { transform: translateY(-2px); border-color: var(--accent); }
+		/* ── header ── */
+		header {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			margin-bottom: 2rem;
+			max-width: 1200px;
+			margin-left: auto;
+			margin-right: auto;
+		}
 
-				.card-logo {
-					width: 44px;
-					height: 44px;
-					border-radius: 8px;
-					object-fit: contain;
-					padding: 2px;
-					background: #fff;
-					flex-shrink: 0;
-				}
-				.card-logo-placeholder {
-					width: 44px;
-					height: 44px;
-					border-radius: 8px;
-					background: var(--bg-placeholder);
-					color: var(--text-secondary);
-					display: flex;
-					align-items: center;
-					justify-content: center;
-					font-size: 1.25rem;
-					font-weight: 700;
-					text-transform: uppercase;
-					flex-shrink: 0;
-				}
-				.card-content {
-					display: flex;
-					flex-direction: column;
-					overflow: hidden;
-					min-width: 0;
-					flex: 1;
-				}
-				.card-name {
-					font-weight: 700;
-					font-size: 1rem;
-					color: var(--text-primary);
-					white-space: nowrap;
-					overflow: hidden;
-					text-overflow: ellipsis;
-				}
-				.card-detail-wrapper {
-					display: grid;
-					grid-template-rows: 0fr;
-					margin-top: 0;
-					transition:
-						grid-template-rows 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-						margin-top 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-				}
-				.detailed .card-detail-wrapper {
-					grid-template-rows: 1fr;
-					margin-top: 0.35rem;
-				}
-				.card-detail {
-					overflow: hidden;
-					display: flex;
-					align-items: center;
-					gap: 0.4rem;
-					font-size: 0.72rem;
-					min-width: 0;
-					opacity: 0;
-					transform: translateY(-3px);
-					transition: opacity 0.2s ease 0.05s, transform 0.2s ease 0.05s;
-				}
-				.detailed .card-detail { opacity: 1; transform: translateY(0); }
+		h1 {
+			font-size: 1.5rem;
+			font-weight: 600;
+			color: var(--accent);
+		}
 
-				.card-kind { font-weight: 600; flex-shrink: 0; }
-				.kind-ingress  { color: var(--kind-ingress); }
-				.kind-httproute { color: var(--kind-httproute); }
-				.card-sep { color: var(--text-sep); flex-shrink: 0; }
-				.card-namespace {
-					color: var(--text-secondary);
-					overflow: hidden;
-					text-overflow: ellipsis;
-					min-width: 0;
-					flex: 1;
-				}
+		.header-controls {
+			display: flex;
+			align-items: center;
+			gap: 0.75rem;
+		}
 
-				.card-info-btn {
-					flex-shrink: 0;
-					background: none;
-					border: 1px solid transparent;
-					color: var(--border);
-					cursor: pointer;
-					font-size: 1.1rem;
-					line-height: 1;
-					padding: 0.3rem 0.45rem;
-					border-radius: 6px;
-					transition: color 0.15s, border-color 0.15s;
-					font-family: inherit;
-				}
-				.card:hover .card-info-btn { color: var(--text-secondary); }
-				.card-info-btn:hover { color: var(--text-primary) !important; border-color: var(--border); }
+		/* ── theme button ── */
+		.theme-btn {
+			background: var(--bg-input);
+			border: 1px solid var(--border);
+			color: var(--text-secondary);
+			width: 34px;
+			height: 34px;
+			padding: 0;
+			border-radius: 6px;
+			font-size: 0.95rem;
+			line-height: 1;
+			cursor: pointer;
+			transition: border-color 0.15s, color 0.15s;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+		}
 
-				/* ── detail panel ── */
-				.detail-overlay {
-					display: none;
-					position: fixed;
-					inset: 0;
-					background: var(--overlay);
-					z-index: 99;
-				}
-				.detail-overlay.open { display: block; }
+		.theme-btn:hover {
+			border-color: var(--accent);
+			color: var(--accent);
+		}
 
-				.detail-panel {
-					position: fixed;
-					top: 0;
-					right: -440px;
-					width: 400px;
-					height: 100vh;
-					background: var(--bg);
-					border-left: 1px solid var(--border);
-					z-index: 100;
-					transition: right 0.28s cubic-bezier(0.4, 0, 0.2, 1);
-					overflow-y: auto;
-					padding: 1.75rem 1.5rem;
-				}
-				.detail-panel.open { right: 0; }
+		/* ── view toggle ── */
+		.toggle-btn {
+			background: var(--bg-input);
+			border: 1px solid var(--border);
+			color: var(--text-secondary);
+			padding: 0.4rem 0.9rem;
+			border-radius: 6px;
+			font-family: inherit;
+			font-size: 0.8rem;
+			cursor: pointer;
+			transition: border-color 0.15s, color 0.15s;
+		}
 
-				.dp-header {
-					display: flex;
-					align-items: center;
-					justify-content: space-between;
-					margin-bottom: 1.5rem;
-					padding-bottom: 1rem;
-					border-bottom: 1px solid var(--border-subtle);
-				}
-				.dp-title { font-size: 1.05rem; font-weight: 700; color: var(--text-primary); }
-				.dp-close {
-					background: none;
-					border: none;
-					color: var(--text-secondary);
-					cursor: pointer;
-					font-size: 1rem;
-					padding: 0.2rem 0.4rem;
-					border-radius: 4px;
-					font-family: inherit;
-				}
-				.dp-close:hover { color: var(--text-primary); background: var(--bg-card); }
+		.toggle-btn:hover,
+		.toggle-btn.active {
+			border-color: var(--accent);
+			color: var(--accent);
+		}
 
-				.dp-row {
-					display: flex;
-					justify-content: space-between;
-					align-items: baseline;
-					padding: 0.55rem 0;
-					border-bottom: 1px solid var(--border-subtle);
-					gap: 1rem;
-				}
-				.dp-label { font-size: 0.72rem; color: var(--text-secondary); flex-shrink: 0; }
-				.dp-value { font-size: 0.82rem; color: var(--text-primary); text-align: right; word-break: break-all; }
-				a.dp-value { color: var(--accent); text-decoration: none; }
-				a.dp-value:hover { text-decoration: underline; }
-				.dp-row-labels { align-items: flex-start; }
-				.dp-labels { display: flex; flex-wrap: wrap; gap: 0.35rem; justify-content: flex-end; }
-				.dp-tag {
-					background: var(--bg-card);
-					border: 1px solid var(--border);
-					border-radius: 4px;
-					padding: 0.15rem 0.45rem;
-					font-size: 0.68rem;
-					color: var(--text-secondary);
-				}
+		/* ── card grid ── */
+		.card-grid {
+			display: grid;
+			grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+			gap: 1.25rem;
+			max-width: 1200px;
+			margin: 0 auto;
+		}
 
-				/* ── empty state ── */
-				.empty {
-					grid-column: 1 / -1;
-					padding: 3rem;
-					color: var(--text-secondary);
-					text-align: center;
-					background: var(--bg-card);
-					border-radius: 12px;
-					border: 1px dashed var(--border);
-				}
-			</style>
-		</head>
-		<body>
-			<header>
-				<h1>Meridian</h1>
-				<div class="header-controls">
-					<button id="theme-btn" class="theme-btn" onclick="toggleTheme()"></button>
-					<button id="view-toggle" class="toggle-btn" onclick="toggleView()">Detailed view</button>
-				</div>
-			</header>
-			<div
-				id="routes"
-				class="card-grid"
-				hx-ext="sse"
-				sse-connect="/ui/events"
-				sse-swap="update"
-			>
-				if len(entries) == 0 {
-					<div class="empty">No routes discovered yet.</div>
-				} else {
-					for _, e := range entries {
-						@Card(e)
-					}
-				}
-			</div>
+		.card {
+			display: flex;
+			align-items: center;
+			background: var(--bg-card);
+			border: 1px solid var(--border);
+			border-radius: 12px;
+			padding: 1.1rem 1.25rem;
+			text-decoration: none;
+			color: inherit;
+			transition: transform 0.15s, border-color 0.15s;
+			min-width: 0;
+			gap: 0.9rem;
+		}
 
-			<div id="detail-overlay" class="detail-overlay" onclick="closeDetail()"></div>
-			<div id="detail-panel" class="detail-panel">
-				<div class="dp-header">
-					<span id="dp-name" class="dp-title"></span>
-					<button class="dp-close" onclick="closeDetail()">✕</button>
-				</div>
-				<div id="dp-body" class="dp-body"></div>
-			</div>
+		.card:hover {
+			transform: translateY(-2px);
+			border-color: var(--accent);
+		}
 
-			<script>
-				function setTheme(theme, animate) {
-					if (animate) {
-						document.documentElement.classList.add('theme-transitioning');
-						setTimeout(() => document.documentElement.classList.remove('theme-transitioning'), 300);
-					}
-					document.documentElement.setAttribute('data-theme', theme);
-					localStorage.setItem('meridian-theme', theme);
-					document.getElementById('theme-btn').textContent = theme === 'dark' ? '☀' : '☽';
-				}
+		.card-logo {
+			width: 44px;
+			height: 44px;
+			border-radius: 8px;
+			object-fit: contain;
+			padding: 2px;
+			background: #fff;
+			flex-shrink: 0;
+		}
 
-				function toggleTheme() {
-					const current = document.documentElement.getAttribute('data-theme') || 'dark';
-					setTheme(current === 'dark' ? 'light' : 'dark', true);
-				}
+		.card-logo-placeholder {
+			width: 44px;
+			height: 44px;
+			border-radius: 8px;
+			background: var(--bg-placeholder);
+			color: var(--text-secondary);
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			font-size: 1.25rem;
+			font-weight: 700;
+			text-transform: uppercase;
+			flex-shrink: 0;
+		}
 
-				(function () {
-					const saved = localStorage.getItem('meridian-theme');
-					const preferred = saved || (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
-					setTheme(preferred, false);
-				})();
+		.card-content {
+			display: flex;
+			flex-direction: column;
+			overflow: hidden;
+			min-width: 0;
+			flex: 1;
+		}
 
-				function toggleView() {
-					const routes = document.getElementById('routes');
-					const btn = document.getElementById('view-toggle');
-					const on = routes.classList.toggle('detailed');
-					btn.textContent = on ? 'Simple view' : 'Detailed view';
-					btn.classList.toggle('active', on);
-				}
+		.card-name {
+			font-weight: 700;
+			font-size: 1rem;
+			color: var(--text-primary);
+			white-space: nowrap;
+			overflow: hidden;
+			text-overflow: ellipsis;
+		}
 
-				function kindCls(kind) {
-					if (kind === 'Ingress') return 'kind-ingress';
-					if (kind === 'HTTPRoute') return 'kind-httproute';
-					return '';
-				}
+		.card-detail-wrapper {
+			display: grid;
+			grid-template-rows: 0fr;
+			margin-top: 0;
+			transition:
+				grid-template-rows 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+				margin-top 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+		}
 
-				function row(label, value, href) {
-					if (!value) return null;
-					const r = document.createElement('div');
-					r.className = 'dp-row';
-					const l = document.createElement('span');
-					l.className = 'dp-label';
-					l.textContent = label;
-					const v = document.createElement(href ? 'a' : 'span');
-					v.className = 'dp-value' + (label === 'Kind' ? ' ' + kindCls(value) : '');
-					v.textContent = value;
-					if (href) { v.href = href; v.target = '_blank'; v.rel = 'noopener noreferrer'; }
-					r.append(l, v);
-					return r;
-				}
+		.detailed .card-detail-wrapper {
+			grid-template-rows: 1fr;
+			margin-top: 0.35rem;
+		}
 
-				function openDetail(btn) {
-					const e = JSON.parse(btn.dataset.entry);
-					document.getElementById('dp-name').textContent = e.Name;
-					const body = document.getElementById('dp-body');
-					body.innerHTML = '';
+		.card-detail {
+			overflow: hidden;
+			display: flex;
+			align-items: center;
+			gap: 0.4rem;
+			font-size: 0.72rem;
+			min-width: 0;
+			opacity: 0;
+			transform: translateY(-3px);
+			transition: opacity 0.2s ease 0.05s, transform 0.2s ease 0.05s;
+		}
 
-					const fields = [
-						row('Kind',        e.Kind),
-						row('Namespace',   e.Namespace),
-						row('Hostname',    e.Hostname, 'https://' + e.Hostname),
-						row('Owner',       e.Owner),
-						row('Description', e.Description),
-						row('Docs',        e.DocsURL, e.DocsURL),
-						row('Tags',        e.Tags && e.Tags.length ? e.Tags.join(', ') : ''),
-						row('UID',         e.UID),
-						row('Updated',     e.UpdatedAt && new Date(e.UpdatedAt).getFullYear() > 1 ? new Date(e.UpdatedAt).toLocaleString() : ''),
-					];
-					fields.forEach(r => r && body.appendChild(r));
+		.detailed .card-detail {
+			opacity: 1;
+			transform: translateY(0);
+		}
 
-					if (e.Labels && Object.keys(e.Labels).length) {
-						const r = document.createElement('div');
-						r.className = 'dp-row dp-row-labels';
-						const l = document.createElement('span');
-						l.className = 'dp-label';
-						l.textContent = 'Labels';
-						const wrap = document.createElement('div');
-						wrap.className = 'dp-labels';
-						Object.entries(e.Labels).forEach(([k, v]) => {
-							const t = document.createElement('span');
-							t.className = 'dp-tag';
-							t.textContent = k + '=' + v;
-							wrap.appendChild(t);
-						});
-						r.append(l, wrap);
-						body.appendChild(r);
-					}
+		.card-kind {
+			font-weight: 600;
+			flex-shrink: 0;
+		}
 
-					document.getElementById('detail-panel').classList.add('open');
-					document.getElementById('detail-overlay').classList.add('open');
-				}
+		.kind-ingress {
+			color: var(--kind-ingress);
+		}
 
-				function closeDetail() {
-					document.getElementById('detail-panel').classList.remove('open');
-					document.getElementById('detail-overlay').classList.remove('open');
-				}
+		.kind-httproute {
+			color: var(--kind-httproute);
+		}
 
-				document.addEventListener('keydown', e => {
-					if (e.key === 'Escape') closeDetail();
+		.card-sep {
+			color: var(--text-sep);
+			flex-shrink: 0;
+		}
+
+		.card-namespace {
+			color: var(--text-secondary);
+			overflow: hidden;
+			text-overflow: ellipsis;
+			min-width: 0;
+			flex: 1;
+		}
+
+		.card-info-btn {
+			flex-shrink: 0;
+			background: none;
+			border: 1px solid transparent;
+			color: var(--border);
+			cursor: pointer;
+			font-size: 1.1rem;
+			line-height: 1;
+			padding: 0.3rem 0.45rem;
+			border-radius: 6px;
+			transition: color 0.15s, border-color 0.15s;
+			font-family: inherit;
+		}
+
+		.card:hover .card-info-btn {
+			color: var(--text-secondary);
+		}
+
+		.card-info-btn:hover {
+			color: var(--text-primary) !important;
+			border-color: var(--border);
+		}
+
+		/* ── detail panel ── */
+		.detail-overlay {
+			display: none;
+			position: fixed;
+			inset: 0;
+			background: var(--overlay);
+			z-index: 99;
+		}
+
+		.detail-overlay.open {
+			display: block;
+		}
+
+		.detail-panel {
+			position: fixed;
+			top: 0;
+			right: -440px;
+			width: 400px;
+			height: 100vh;
+			background: var(--bg);
+			border-left: 1px solid var(--border);
+			z-index: 100;
+			transition: right 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+			overflow-y: auto;
+			padding: 1.75rem 1.5rem;
+		}
+
+		.detail-panel.open {
+			right: 0;
+		}
+
+		.dp-header {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			margin-bottom: 1.5rem;
+			padding-bottom: 1rem;
+			border-bottom: 1px solid var(--border-subtle);
+		}
+
+		.dp-title {
+			font-size: 1.05rem;
+			font-weight: 700;
+			color: var(--text-primary);
+		}
+
+		.dp-close {
+			background: none;
+			border: none;
+			color: var(--text-secondary);
+			cursor: pointer;
+			font-size: 1rem;
+			padding: 0.2rem 0.4rem;
+			border-radius: 4px;
+			font-family: inherit;
+		}
+
+		.dp-close:hover {
+			color: var(--text-primary);
+			background: var(--bg-card);
+		}
+
+		.dp-row {
+			display: flex;
+			justify-content: space-between;
+			align-items: baseline;
+			padding: 0.55rem 0;
+			border-bottom: 1px solid var(--border-subtle);
+			gap: 1rem;
+		}
+
+		.dp-label {
+			font-size: 0.72rem;
+			color: var(--text-secondary);
+			flex-shrink: 0;
+		}
+
+		.dp-value {
+			font-size: 0.82rem;
+			color: var(--text-primary);
+			text-align: right;
+			word-break: break-all;
+		}
+
+		a.dp-value {
+			color: var(--accent);
+			text-decoration: none;
+		}
+
+		a.dp-value:hover {
+			text-decoration: underline;
+		}
+
+		.dp-row-labels {
+			align-items: flex-start;
+		}
+
+		.dp-labels {
+			display: flex;
+			flex-wrap: wrap;
+			gap: 0.35rem;
+			justify-content: flex-end;
+		}
+
+		.dp-tag {
+			background: var(--bg-card);
+			border: 1px solid var(--border);
+			border-radius: 4px;
+			padding: 0.15rem 0.45rem;
+			font-size: 0.68rem;
+			color: var(--text-secondary);
+		}
+
+		/* ── empty state ── */
+		.empty {
+			grid-column: 1 / -1;
+			padding: 3rem;
+			color: var(--text-secondary);
+			text-align: center;
+			background: var(--bg-card);
+			border-radius: 12px;
+			border: 1px dashed var(--border);
+		}
+	</style>
+</head>
+
+<body>
+	<header>
+		<h1>Meridian</h1>
+		<div class="header-controls">
+			<button id="theme-btn" class="theme-btn" onclick="toggleTheme()"></button>
+			<button id="view-toggle" class="toggle-btn" onclick="toggleView()">Detailed view</button>
+		</div>
+	</header>
+	<div id="routes" class="card-grid" hx-ext="sse" sse-connect="/ui/events" sse-swap="update">
+		if len(entries) == 0 {
+		<div class="empty">No routes discovered yet.</div>
+		} else {
+		for _, e := range entries {
+		@Card(e)
+		}
+		}
+	</div>
+
+	<div id="detail-overlay" class="detail-overlay" onclick="closeDetail()"></div>
+	<div id="detail-panel" class="detail-panel">
+		<div class="dp-header">
+			<span id="dp-name" class="dp-title"></span>
+			<button class="dp-close" onclick="closeDetail()">✕</button>
+		</div>
+		<div id="dp-body" class="dp-body"></div>
+	</div>
+
+	<script>
+		function setTheme(theme, animate) {
+			if (animate) {
+				document.documentElement.classList.add('theme-transitioning');
+				setTimeout(() => document.documentElement.classList.remove('theme-transitioning'), 300);
+			}
+			document.documentElement.setAttribute('data-theme', theme);
+			localStorage.setItem('meridian-theme', theme);
+			document.getElementById('theme-btn').textContent = theme === 'dark' ? '☀' : '☽';
+		}
+
+		function toggleTheme() {
+			const current = document.documentElement.getAttribute('data-theme') || 'dark';
+			setTheme(current === 'dark' ? 'light' : 'dark', true);
+		}
+
+		(function () {
+			const saved = localStorage.getItem('meridian-theme');
+			const preferred = saved || (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+			setTheme(preferred, false);
+		})();
+
+		function toggleView() {
+			const routes = document.getElementById('routes');
+			const btn = document.getElementById('view-toggle');
+			const on = routes.classList.toggle('detailed');
+			btn.textContent = on ? 'Simple view' : 'Detailed view';
+			btn.classList.toggle('active', on);
+		}
+
+		function kindCls(kind) {
+			if (kind === 'Ingress') return 'kind-ingress';
+			if (kind === 'HTTPRoute') return 'kind-httproute';
+			return '';
+		}
+
+		function row(label, value, href) {
+			if (!value) return null;
+			const r = document.createElement('div');
+			r.className = 'dp-row';
+			const l = document.createElement('span');
+			l.className = 'dp-label';
+			l.textContent = label;
+			const v = document.createElement(href ? 'a' : 'span');
+			v.className = 'dp-value' + (label === 'Kind' ? ' ' + kindCls(value) : '');
+			v.textContent = value;
+			if (href) {v.href = href; v.target = '_blank'; v.rel = 'noopener noreferrer';}
+			r.append(l, v);
+			return r;
+		}
+
+		function openDetail(btn) {
+			const e = JSON.parse(btn.dataset.entry);
+			document.getElementById('dp-name').textContent = e.Name;
+			const body = document.getElementById('dp-body');
+			body.innerHTML = '';
+
+			const fields = [
+				row('Kind', e.kind),
+				row('Namespace', e.namespace),
+				row('Hostname', e.hostname, 'https://' + e.hostname),
+				row('Owner', e.owner),
+				row('Description', e.description),
+				row('Docs', e.docsUrl, e.docsUrl),
+				row('Tags', e.tags && e.Tags.length ? e.Tags.join(', ') : ''),
+				row('UID', e.uid),
+				row('Updated', e.updatedAt && new Date(e.updatedAt).getFullYear() > 1 ? new Date(e.updatedAt).toLocaleString() : ''),
+			];
+			fields.forEach(r => r && body.appendChild(r));
+
+			if (e.labels && Object.keys(e.labels).length) {
+				const r = document.createElement('div');
+				r.className = 'dp-row dp-row-labels';
+				const l = document.createElement('span');
+				l.className = 'dp-label';
+				l.textContent = 'Labels';
+				const wrap = document.createElement('div');
+				wrap.className = 'dp-labels';
+				Object.entries(e.labels).forEach(([k, v]) => {
+					const t = document.createElement('span');
+					t.className = 'dp-tag';
+					t.textContent = k + '=' + v;
+					wrap.appendChild(t);
 				});
-			</script>
-		</body>
-	</html>
+				r.append(l, wrap);
+				body.appendChild(r);
+			}
+
+			document.getElementById('detail-panel').classList.add('open');
+			document.getElementById('detail-overlay').classList.add('open');
+		}
+
+		function closeDetail() {
+			document.getElementById('detail-panel').classList.remove('open');
+			document.getElementById('detail-overlay').classList.remove('open');
+		}
+
+		document.addEventListener('keydown', e => {
+			if (e.key === 'Escape') closeDetail();
+		});
+	</script>
+</body>
+
+</html>
 }

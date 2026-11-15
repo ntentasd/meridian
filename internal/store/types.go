@@ -7,28 +7,28 @@ import (
 )
 
 type RouteEntry struct {
-	UID       types.UID
-	Name      string
-	Namespace string
-	Kind      string
-	Hostname  string
-	Rules     []RouteRule
+	UID       types.UID   `json:"uid"`
+	Name      string      `json:"name"`
+	Namespace string      `json:"namespace"`
+	Kind      string      `json:"kind"`
+	Hostname  string      `json:"hostname"`
+	Rules     []RouteRule `json:"rules"`
 
 	// annotation-enriched
-	LogoURL     string
-	Owner       string
-	Description string
-	DocsURL     string
-	Tags        []string
+	LogoURL     string   `json:"logoUrl"`
+	Owner       string   `json:"owner"`
+	Description string   `json:"description"`
+	DocsURL     string   `json:"docsUrl"`
+	Tags        []string `json:"tags"`
 
 	// housekeeping
-	UpdatedAt time.Time
-	Labels    map[string]string
+	UpdatedAt time.Time         `json:"updatedAt"`
+	Labels    map[string]string `json:"labels"`
 }
 
 type RouteRule struct {
-	Path    string
-	Methods []string
+	Path    string   `json:"path"`
+	Methods []string `json:"methods"`
 }
 
 type EventKind string
@@ -39,6 +39,6 @@ const (
 )
 
 type Event struct {
-	Kind  EventKind
-	Entry RouteEntry
+	Kind  EventKind  `json:"kind"`
+	Entry RouteEntry `json:"route"`
 }
